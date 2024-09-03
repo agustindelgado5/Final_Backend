@@ -11,7 +11,7 @@ const checkAuth = (req, res, next) => {
   try {
     // obtengo el token de autorizacion del encabezado de la solicitud
     const token = req.headers.authorization.split(' ')[1]; // Authorization: 'Bearer TOKEN'
-    
+    console.log('Token recibido:', token); // Log para verificar el token
     // Si no hay token, lanzar un error de autenticación
     if (!token) {
       throw new Error('Authentication failed!');

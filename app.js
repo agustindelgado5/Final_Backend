@@ -2,8 +2,9 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const usersRoutes = require('./routes/user-routes'); 
 const assetRoutes = require('./routes/asset-routes'); 
-//const HttpError = require('./models/http-error'); 
+const HttpError = require('./models/http-error'); 
 
 require('dotenv').config();
 
@@ -19,6 +20,8 @@ app.use(cors({
 
 // Middleware para analizar el cuerpo de las solicitudes JSON
 app.use(bodyParser.json());
+
+app.use('/api/users', usersRoutes); // Registrar endpoints bajo /api/users
 
 // Registrar las rutas de assets bajo /api/assets
 app.use('/api/assets', assetRoutes);
