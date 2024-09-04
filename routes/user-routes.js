@@ -33,8 +33,6 @@ router.post(
 
 router.get('/', usersController.getUsers); // Solo admin puede listar usuarios
 
-router.patch('/:uid', usersController.updateUser); // Solo admin puede editar usuarios
 
-router.delete('/:uid', usersController.deleteUser); // Solo admin puede eliminar usuarios
 
 module.exports = router;

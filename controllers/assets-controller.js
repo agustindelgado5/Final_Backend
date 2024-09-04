@@ -84,6 +84,7 @@ const deleteAsset = async (req, res, next) => {
 
   // Actualizar un asset
 const updateAsset = async (req, res, next) => {
+    console.log("Editando asset")
     const assetId = req.params.id;
     const { description, category, assigned_employee, assigned_date } = req.body;
   

@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 
 
 const crypto = require('crypto'); // Para generar tokens únicos
-const nodemailer = require('nodemailer'); // Para enviar emails
+//const nodemailer = require('nodemailer'); // Para enviar emails
 
 
 // Registro de un nuevo usuario (solo disponible para admin)
@@ -91,73 +91,7 @@ const getUsers = async (req, res, next) => {
 };
 
 
-// Actualizar un usuario (solo disponible para admin)
-const updateUser = async (req, res, next) => {
-  const { name, email, password, role } = req.body;
-  const userId = req.params.uid;
 
- 
-
-  let user;
-  try {
-    console.log(userId);
-    user = await User.findById(userId);
-    
-    if (!user) {
-      return next(new HttpError('Usuario no encontrado.', 404));
-    }
-  } catch (err) {
-    return next(new HttpError('Algo salió mal, no se pudo actualizar el usuario.', 500));
-  }
-
-  user.name = name;
-  user.email = email;
-
-  if (password) {
-    try {
-      user.password = await bcrypt.hash(password, 12);
-    } catch (err) {
-      return next(new HttpError('Algo salió mal, no se pudo actualizar la contraseña.', 500));
-    }
-  }
-
-  user.role = role || user.role; // Actualizar el rol solo si se proporciona uno nuevo
-
-  try {
-    await user.save();
-  } catch (err) {
-    return next(new HttpError('Algo salió mal, no se pudo actualizar el usuario.', 500));
-  }
-
-  res.status(200).json({ user: user.toObject({ getters: true }) });
-};
-
-// Eliminar un usuario (solo disponible para admin)
-const deleteUser = async (req, res, next) => {
-  const userId = req.params.uid;
-
-
-
-  let user;
-  try {
-    user = await User.findById(userId);
-    if (!user) {
-      return next(new HttpError('Usuario no encontrado.', 404));
-    }
-  } catch (err) {
-    console.error('Error al encontrar el usuario:', err); // Añadir este log para más detalles
-    return next(new HttpError('Algo salió mal, no se pudo eliminar el usuario.', 500));
-  }
-
-  try {
-    await user.deleteOne({ _id: userId });
-  } catch (err) {
-    console.error('Error al eliminar el usuario:', err); // Añadir este log para más detalles
-    return next(new HttpError('Algo salió mal, no se pudo eliminar el usuario.', 500));
-  }
-
-  res.status(200).json({ message: 'Usuario eliminado.' });
-};
 
 
 
@@ -203,109 +137,12 @@ const login = async (req, res, next) => {
     res.json({ userId: existingUser.id, email: existingUser.email, token: token, role: existingUser.role });
 };
 
-// Generar y enviar el token de recuperación de contraseña
-const sendResetToken = async (req, res, next) => {
-  const { email } = req.body;
-  
-
-  let user;
-  try {
-    user = await User.findOne({ email });
-    if (!user) {
-      return next(new HttpError('No se encontró un usuario con ese correo electrónico.', 404));
-    }
-  } catch (err) {
-    return next(new HttpError('Algo salió mal, por favor intenta nuevamente más tarde.', 500));
-  }
-
-  // Generar token de recuperación
-  const token = crypto.randomBytes(32).toString('hex');
-  user.resetToken = token;
-  user.tokenExpiration = Date.now() + 3600000; // 1 hora de validez
-
-
-  try {
-    await user.save();
-  } catch (err) {
-    return next(new HttpError('Algo salió mal, por favor intenta nuevamente más tarde.', 500));
-  }
-  
-  // Configurar y enviar el correo electrónico
-  const transporter = nodemailer.createTransport({
-    host:'smtp.gmail.com',
-    port: 587,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
-    }
-  });
-
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to: email,
-    subject: 'Recuperación de Contraseña',
-    html: `<p>Recibimos una solicitud para restablecer tu contraseña. Haz clic en el siguiente enlace para establecer una nueva contraseña:</p>
-           <p><a href="http://localhost:3000/reset-password/${token}">Restablecer Contraseña</a></p>`
-  };
- 
-
-  try {
-    await transporter.sendMail(mailOptions);
-    res.status(200).json({ message: 'Correo de recuperación enviado.' });
-  } catch (err) {
-    return next(new HttpError('No se pudo enviar el correo de recuperación, por favor intenta nuevamente más tarde.', 500));
-  }
-};
-
-// Actualizar la contraseña usando el token de recuperación
-const resetPassword = async (req, res, next) => {
-  const { newPassword } = req.body;
-  
-  const { token } = req.params;
-
-  
-  let user;
-  try {
-    user = await User.findOne({ resetToken: token, tokenExpiration: { $gt: Date.now() } });
-    if (!user) {
-      return next(new HttpError('Token de recuperación inválido o expirado.', 400));
-    }
-  } catch (err) {
-    return next(new HttpError('Algo salió mal, por favor intenta nuevamente más tarde.', 500));
-  }
-  
-  let hashedPassword;
-  try {
-   
-    hashedPassword = await bcrypt.hash(newPassword, 12);
-   
-  } catch (err) {
-    
-    return next(new HttpError('No se pudo actualizarr la contraseña, por favor intenta nuevamente.', 500));
-  }
-
-  user.password = hashedPassword;
-  user.resetToken = undefined;
-  user.tokenExpiration = undefined;
-
-  try {
-    await user.save();
-    
-  } catch (err) {
-    return next(new HttpError('No se pudo actualizar la contraseña, por favor intenta nuevamente.', 500));
-  }
-
-  res.status(200).json({ message: 'Contraseña actualizada correctamente.' });
-};
 
 
 
 module.exports = {
   signup,
   getUsers,
-  updateUser,
-  deleteUser,
   login,
-  sendResetToken,  //  función para enviar el token de recuperación de contraseña
-  resetPassword,   // función para restablecer la contraseña
+ 
 };
