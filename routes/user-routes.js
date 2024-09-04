@@ -1,12 +1,14 @@
 const express = require('express');
 const { check } = require('express-validator');
-const { getUsers, deleteUser, login, register } = require('../controllers/users-controller');
+const usersController = require('../controllers/users-controller'); 
 const { checkAuth, checkAdmin } = require('../middleware/check-auth');
 
 const router = express.Router();
 
-// Ruta para el login (accesible sin autenticación)
-router.post('/login', login);
+
+
+
+router.post('/login', usersController.login); 
 
 
 router.use(checkAuth); // Proteger todas las rutas siguientes
@@ -15,24 +17,24 @@ router.use(checkAuth); // Proteger todas las rutas siguientes
 router.use(checkAdmin);
 
 
-// Ruta para registrar un nuevo usuario (solo accesible por administradores)
 router.post(
-  '/register',
+  '/signup',
+   // Solo admin puede registrar usuarios
   [
     check('name').not().isEmpty(),
     check('email').normalizeEmail().isEmail(),
     check('password').isLength({ min: 6 }),
     check('role').not().isEmpty()
   ],
-  register
+  usersController.signup
 );
 
 
 
-// Ruta para listar todos los usuarios (solo accesible por administradores)
-router.get('/', getUsers);
+router.get('/', usersController.getUsers); // Solo admin puede listar usuarios
 
-// Ruta para eliminar un usuario por ID (solo accesible por administradores)
-router.delete('/:id', deleteUser);
+router.patch('/:uid', usersController.updateUser); // Solo admin puede editar usuarios
+
+router.delete('/:uid', usersController.deleteUser); // Solo admin puede eliminar usuarios
 
 module.exports = router;
