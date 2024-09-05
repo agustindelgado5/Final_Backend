@@ -1,5 +1,7 @@
 
 const Asset = require('../models/asset'); 
+const HttpError = require('../models/http-error');
+
 const mongoose = require('mongoose');
 const getAssets = async (req, res, next) => {
   const { page = 1, limit = 10, description, category } = req.query; // Valores por defecto para paginación y filtros
