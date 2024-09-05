@@ -2,26 +2,41 @@
 const Asset = require('../models/asset'); 
 const mongoose = require('mongoose');
 const getAssets = async (req, res, next) => {
-    const { page = 1, limit = 10 } = req.query; // Valores por defecto
-  
-    let assets;
-    try {
-      assets = await Asset.find()
-        .limit(limit * 1)
-        .skip((page - 1) * limit)
-        .exec();
-  
-      const count = await Asset.countDocuments();
-  
-      res.status(200).json({
-        assets,
-        totalPages: Math.ceil(count / limit),
-        currentPage: page
-      });
-    } catch (err) {
-      return res.status(500).json({ message: 'No se pudo recuperar los assets.' });
-    }
-  };
+  const { page = 1, limit = 10, description, category } = req.query; // Valores por defecto para paginación y filtros
+
+  // Crear un objeto de filtro dinámico
+  const filter = {};
+
+  // Si hay un valor en 'description', lo agregamos al filtro usando una expresión regular
+  if (description) {
+    filter.description = { $regex: description, $options: 'i' }; // Búsqueda insensible a mayúsculas/minúsculas
+  }
+
+  // Si hay un valor en 'category', lo agregamos al filtro
+  if (category) {
+    filter.category = { $regex: category, $options: 'i' }; // Búsqueda insensible a mayúsculas/minúsculas
+  }
+
+  try {
+    // Aplicar los filtros y la paginación
+    const assets = await Asset.find(filter) // Aplicar el filtro
+      .limit(limit * 1) // Limitar resultados
+      .skip((page - 1) * limit) // Saltar resultados según la página
+      .exec();
+
+    // Contar el número total de documentos que coinciden con el filtro
+    const count = await Asset.countDocuments(filter);
+
+    res.status(200).json({
+      assets,
+      totalPages: Math.ceil(count / limit),
+      currentPage: page,
+    });
+  } catch (err) {
+    return res.status(500).json({ message: 'No se pudo recuperar los assets.' });
+  }
+};
+
   const getAssetById = async (req, res, next) => {
     const assetId = req.params.id;
   
