@@ -5,8 +5,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 
-const crypto = require('crypto'); // Para generar tokens únicos
-//const nodemailer = require('nodemailer'); // Para enviar emails
+
 
 
 // Registro de un nuevo usuario (solo disponible para admin)
@@ -99,7 +98,7 @@ const getUsers = async (req, res, next) => {
 // Login de un usuario
 const login = async (req, res, next) => {
   const { email, password } = req.body;
-  console.log("password",password)
+ 
   let existingUser;
   try {
     existingUser = await User.findOne({ email });

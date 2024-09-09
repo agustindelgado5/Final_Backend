@@ -2,11 +2,12 @@ const Asset = require('../models/asset');
 const HttpError = require('../models/http-error');
 const mongoose = require('mongoose');
 
-// Obtener la lista de assets con paginación y filtros
-const getAssets = async (req, res, next) => {
-  const { page = 1, limit = 10, description, category } = req.query; // Valores por defecto para paginación y filtros
 
-  // Crear un objeto de filtro dinámico
+// Obtener la lista de assets con paginación, filtros y ordenación
+const getAssets = async (req, res, next) => {
+  const { page = 1, limit = 10, description, category, sortBy = 'description', order = 'asc' } = req.query;
+
+ 
   const filter = {};
 
   // Si hay un valor en 'description', lo agregamos al filtro usando una expresión regular
@@ -19,9 +20,13 @@ const getAssets = async (req, res, next) => {
     filter.category = { $regex: category, $options: 'i' }; // Búsqueda insensible a mayúsculas/minúsculas
   }
 
+  // Definir el orden de clasificación (ascendente o descendente)
+  const sortOrder = order === 'desc' ? -1 : 1; // Si 'order' es 'desc', usa -1, de lo contrario 1 (ascendente)
+
   try {
-    // Aplicar los filtros y la paginación
+    // Aplicar los filtros, la paginación y la ordenación
     const assets = await Asset.find(filter) // Aplicar el filtro
+      .sort({ [sortBy]: sortOrder }) // Ordenar por el campo definido y en el orden especificado
       .limit(limit * 1) // Limitar resultados
       .skip((page - 1) * limit) // Saltar resultados según la página
       .exec();
@@ -39,6 +44,7 @@ const getAssets = async (req, res, next) => {
     return res.status(500).json({ message: 'No se pudo recuperar los assets.' });
   }
 };
+
 
 // Obtener un asset por su ID
 const getAssetById = async (req, res, next) => {
@@ -113,7 +119,7 @@ const deleteAsset = async (req, res, next) => {
 
 // Actualizar un asset por su ID
 const updateAsset = async (req, res, next) => {
-  console.log("Editando asset");
+
   const assetId = req.params.id;
   const { description, category, assigned_employee, assigned_date } = req.body;
 
